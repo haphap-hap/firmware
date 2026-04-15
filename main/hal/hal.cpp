@@ -103,6 +103,10 @@ void Hal::xiaozhi_board_init()
 void Hal::startXiaozhi()
 {
     mclog::tagInfo(_tag, "start xiaozhi");
+        // 👇 插入这两行代码 👇
+    extern void start_mac_video_stream(); // 声明外部函数，巧妙绕过 hal.h 的头文件报错
+    start_mac_video_stream();             // 点火！
+    // 👆 插入结束 👆
 
     hal_bridge::start_xiaozhi_app();
 }
@@ -200,27 +204,15 @@ void Hal::stopStackChanAutoUpdate()
 /*                                  Reminder                                  */
 /* -------------------------------------------------------------------------- */
 #include "hal/utils/reminder/reminder.h"
-#include <ctime>
 
 int Hal::createReminder(int duration_s, const std::string& message)
 {
     return ReminderManager::GetInstance().CreateReminder(duration_s, message);
 }
 
-int Hal::createReminderAtEpochSeconds(int epoch_seconds, const std::string& message)
-{
-    return ReminderManager::GetInstance().CreateReminderAtEpochSeconds(epoch_seconds, message);
-}
-
 void Hal::stopReminder(int id)
 {
     ReminderManager::GetInstance().StopReminder(id);
-}
-
-bool Hal::isSystemTimeValid()
-{
-    // Use a fixed lower bound to detect whether real time has been synchronized.
-    return std::time(nullptr) > 1700000000;
 }
 
 void Hal::reminder_init()

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: MIT
  */
 #include "default.h"
-#include "../../decorators/decorators.h"
 
 using namespace uitk::lvgl_cpp;
 using namespace stackchan::avatar;
@@ -32,18 +31,4 @@ Container* DefaultAvatar::getPanel() const
         return _pannel.get();
     }
     return NULL;
-}
-
-void DefaultAvatar::setEmotion(const Emotion& emotion)
-{
-    // Call parent implementation first
-    Avatar::setEmotion(emotion);
-
-    // Add heart decorator for Neutral emotion
-    if (emotion == Emotion::Neutral) {
-        if (_pannel) {
-            auto heart = std::make_unique<HeartDecorator>(_pannel->get(), 0, 500);
-            addDecorator(std::move(heart));
-        }
-    }
 }

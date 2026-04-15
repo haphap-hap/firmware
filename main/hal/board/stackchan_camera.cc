@@ -1,11 +1,7 @@
-#include "sdkconfig.h"
-
-#if !defined(CONFIG_IDF_TARGET_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32S3)
-
 #include "stackchan_camera.h"
 #include <fcntl.h>
 #include <sys/ioctl.h>
-// #include <sys/mman.h>
+#include <sys/mman.h>
 #include <sys/param.h>
 #include <unistd.h>
 #include "board.h"
@@ -492,7 +488,7 @@ bool StackChanCamera::Capture()
                     break;
                 }
                 default:
-                    ESP_LOGE(TAG, "unsupported sensor format: 0x%08x", sensor_format_);
+                    ESP_LOGE(TAG, "unsupported sensor format: 0x%08x", (unsigned int)sensor_format_);
                     if (ioctl(video_fd_, VIDIOC_QBUF, &buf) != 0) {
                         ESP_LOGE(TAG, "Cleanup: VIDIOC_QBUF failed");
                     }
@@ -534,7 +530,7 @@ bool StackChanCamera::Capture()
                     rotate_cfg.in_pixel_fmt = ESP_IMGFX_PIXEL_FMT_RGB888;
                     break;
                 default:
-                    ESP_LOGE(TAG, "unsupported sensor format: 0x%08x", sensor_format_);
+                    ESP_LOGE(TAG, "unsupported sensor format: 0x%08x",(unsigned int) sensor_format_);
                     if (ioctl(video_fd_, VIDIOC_QBUF, &buf) != 0) {
                         ESP_LOGE(TAG, "Cleanup: VIDIOC_QBUF failed");
                     }
@@ -649,7 +645,7 @@ bool StackChanCamera::Capture()
                     break;
                 }
                 default:
-                    ESP_LOGE(TAG, "unsupported sensor format for PPA rotation: 0x%08x", sensor_format_);
+                    ESP_LOGE(TAG, "unsupported sensor format for PPA rotation: 0x%08x", (unsigned int)sensor_format_);
                     if (ioctl(video_fd_, VIDIOC_QBUF, &buf) != 0) {
                         ESP_LOGE(TAG, "Cleanup: VIDIOC_QBUF failed");
                     }
@@ -918,7 +914,7 @@ bool StackChanCamera::StreamCaptures()
                     break;
                 }
                 default:
-                    ESP_LOGE(TAG, "unsupported sensor format: 0x%08x", sensor_format_);
+                    ESP_LOGE(TAG, "unsupported sensor format: 0x%08x",(unsigned int) sensor_format_);
                     if (ioctl(video_fd_, VIDIOC_QBUF, &buf) != 0) {
                         ESP_LOGE(TAG, "Cleanup: VIDIOC_QBUF failed");
                     }
@@ -1112,5 +1108,3 @@ std::string StackChanCamera::Explain(const std::string& question)
              (int)frame_.len, (int)total_sent, (int)remain_stack_size, question.c_str(), result.c_str());
     return result;
 }
-
-#endif // !defined(CONFIG_IDF_TARGET_ESP32)

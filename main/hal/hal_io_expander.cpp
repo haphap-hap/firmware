@@ -8,11 +8,8 @@
 #include "drivers/PY32IOExpander_Class/PY32IOExpander_Class.hpp"
 #include <mooncake_log.h>
 #include <memory>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
 
 static const std::string _tag = "HAL-IOE";
-static constexpr bool kEnableRgbStrip = false;
 
 static std::unique_ptr<m5::PY32IOExpander_Class> _io_expander;
 
@@ -47,17 +44,15 @@ void Hal::io_expander_init()
         GetHAL().setServoPowerEnabled(true);
         vTaskDelay(pdMS_TO_TICKS(200));
 
-        if (kEnableRgbStrip) {
-            // RGB
-            _io_expander->setDirection(13, true);   // Output
-            _io_expander->setPullMode(13, true);    // Pull-up
-            _io_expander->setDriveMode(13, false);  // Push-pull
-            _io_expander->setLedCount(12);
-            vTaskDelay(pdMS_TO_TICKS(200));
-            GetHAL().showRgbColor(0, 0, 0);
-            vTaskDelay(pdMS_TO_TICKS(50));
-            GetHAL().showRgbColor(0, 0, 0);
-        }
+        // RGB
+        _io_expander->setDirection(13, true);   // Output
+        _io_expander->setPullMode(13, true);    // Pull-up
+        _io_expander->setDriveMode(13, false);  // Push-pull
+        _io_expander->setLedCount(12);
+        vTaskDelay(pdMS_TO_TICKS(200));
+        GetHAL().showRgbColor(0, 0, 0);
+        vTaskDelay(pdMS_TO_TICKS(50));
+        GetHAL().showRgbColor(0, 0, 0);
 
         mclog::tagInfo(_tag, "init done");
     }
@@ -73,7 +68,7 @@ void Hal::setServoPowerEnabled(bool enabled)
 
 void Hal::setRgbColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b)
 {
-    if (!_io_expander || !kEnableRgbStrip) {
+    if (!_io_expander) {
         return;
     }
     _io_expander->setLedColor(index, r, g, b);
@@ -81,7 +76,7 @@ void Hal::setRgbColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b)
 
 void Hal::refreshRgb()
 {
-    if (!_io_expander || !kEnableRgbStrip) {
+    if (!_io_expander) {
         return;
     }
     _io_expander->refreshLeds();

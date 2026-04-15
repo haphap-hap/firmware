@@ -1,15 +1,7 @@
 #pragma once
 #include "sdkconfig.h"
 
-#include "camera.h"
-
-#if defined(CONFIG_IDF_TARGET_ESP32)
-// This project may be built for classic ESP32 where StackChan camera backend
-// (esp_video + V4L2 pixel formats) is not available. Keep a forward declaration
-// so other modules can compile and feature-gate at runtime / build-time.
-class StackChanCamera;
-
-#else
+#ifndef CONFIG_IDF_TARGET_ESP32
 #include <lvgl.h>
 #include <thread>
 #include <memory>
@@ -87,4 +79,4 @@ public:
     }
 };
 
-#endif  // defined(CONFIG_IDF_TARGET_ESP32)
+#endif  // ndef CONFIG_IDF_TARGET_ESP32

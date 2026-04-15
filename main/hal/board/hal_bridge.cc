@@ -17,6 +17,8 @@
 #include <mutex>
 #include <assets.h>
 
+static const char* _tag = "HAL_BRIDGE";
+
 namespace hal_bridge {
 
 /* -------------------------------------------------------------------------- */

@@ -9,7 +9,6 @@
 #include <esp_lcd_panel_ops.h>
 #include <esp_timer.h>
 #include <memory>
-#include <string>
 
 class StackChanAvatarDisplay : public LvglDisplay {
 private:
@@ -23,9 +22,6 @@ private:
     lv_obj_t* preview_image_                         = nullptr;
     esp_timer_handle_t preview_timer_                = nullptr;
     std::unique_ptr<LvglImage> preview_image_cached_ = nullptr;
-    std::string last_chat_role_;
-    std::string last_chat_content_;
-    int64_t last_chat_update_us_ = 0;
 
 protected:
     virtual bool Lock(int timeout_ms = 0) override;

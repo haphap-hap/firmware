@@ -38,39 +38,41 @@ void AppSetup::onOpen()
 
     LvglLockGuard lock;
 
-    _menu_sections = { {
-                           "Connectivity",
-                           {
-                               // {"Set Up Wi-Fi",
-                               // [&]() {
-                               //     _destroy_menu = true;
-                               //     _worker       = std::make_unique<WifiSetupWorker>();
-                               // }},
-                               {"App Bind Code",
-                                [&]() {
-                                    _destroy_menu = true;
-                                    _worker       = std::make_unique<AppBindCodeWorker>();
-                                }}
-                           },
-                       },
-                       {
-                           "Servo",
-                           {
-                               {"Zero Calibration",
-                                [&]() {
-                                    _destroy_menu = true;
-                                    _worker       = std::make_unique<ZeroCalibrationWorker>();
-                                }}
-                           },
-                       },
-                       {
-                           "About",
-                           {{fmt::format("FW Version:  {}", common::FirmwareVersion), nullptr}},
-                       },
-                       {
-                           "End",
-                           {{"Quit", [&]() { close(); }}},
-                       } };
+    _menu_sections = {{
+                          "Connectivity",
+                          {
+                            // {"Set Up Wi-Fi",
+                            // [&]() {
+                            //     _destroy_menu = true;
+                            //     _worker       = std::make_unique<WifiSetupWorker>();
+                            // }},
+                           {"App Bind Code",
+                            [&]() {
+                                _destroy_menu = true;
+                                _worker       = std::make_unique<AppBindCodeWorker>();
+                            }}},
+                      },
+                      {
+                          "Servo",
+                          {{"Zero Calibration",
+                            [&]() {
+                                _destroy_menu = true;
+                                _worker       = std::make_unique<ZeroCalibrationWorker>();
+                            }},
+                           {"LED Strips Test",
+                            [&]() {
+                                _destroy_menu = true;
+                                _worker       = std::make_unique<RgbTestWorker>();
+                            }}},
+                      },
+                      {
+                          "About",
+                          {{fmt::format("FW Version:  {}", common::FirmwareVersion), nullptr}},
+                      },
+                      {
+                          "End",
+                          {{"Quit", [&]() { close(); }}},
+                      }};
 
     _menu_page = std::make_unique<view::SelectMenuPage>(_menu_sections);
 }

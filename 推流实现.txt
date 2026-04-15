@@ -1,0 +1,10 @@
+main/hal/hal_ws_avatar.cpp里面：
+    void init() {
+        _url = "ws://172.20.10.3:8080/ws";  //改为自己的热点IP地址
+        connect();
+    }
+
+终端跑：
+go run main.go
+
+打开网址即可

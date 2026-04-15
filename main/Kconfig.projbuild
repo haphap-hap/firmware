@@ -569,7 +569,7 @@ endchoice
 
 choice WAKE_WORD_TYPE
     prompt "Wake Word Implementation Type"
-    default USE_CUSTOM_WAKE_WORD if (IDF_TARGET_ESP32S3 || IDF_TARGET_ESP32P4) && SPIRAM
+    default USE_AFE_WAKE_WORD if (IDF_TARGET_ESP32S3 || IDF_TARGET_ESP32P4) && SPIRAM
     default WAKE_WORD_DISABLED
     help
         Choose the type of wake word implementation to use
@@ -601,14 +601,14 @@ endchoice
 
 config CUSTOM_WAKE_WORD
     string "Custom Wake Word"
-    default "ni hao xiao hang"
+    default "xiao tu dou"
     depends on USE_CUSTOM_WAKE_WORD
     help
         Custom Wake Word, use pinyin for Chinese, separated by spaces
 
 config CUSTOM_WAKE_WORD_DISPLAY
     string "Custom Wake Word Display"
-    default "你好，小杭"
+    default "小土豆"
     depends on USE_CUSTOM_WAKE_WORD
     help
         Greeting sent to the server after wake word detection

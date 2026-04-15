@@ -9,7 +9,6 @@
 #include <mooncake_log.h>
 #include <assets/assets.h>
 #include <smooth_lvgl.hpp>
-#include <application.h>
 
 using namespace mooncake;
 using namespace smooth_ui_toolkit::lvgl_cpp;
@@ -38,12 +37,6 @@ void AppAiAgent::onOpen()
     mclog::tagInfo(getAppInfo().name, "on open");
 
     GetHAL().startXiaozhi();
-
-    // Enter listening immediately after startup so first interaction does not require touch.
-    auto& app = Application::GetInstance();
-    if (app.GetDeviceState() == kDeviceStateIdle) {
-        app.StartListening();
-    }
 }
 
 // Called repeatedly while the App is running

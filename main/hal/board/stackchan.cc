@@ -1,4 +1,3 @@
-#include "sdkconfig.h"
 #include "wifi_board.h"
 #include "cores3_audio_codec.h"
 #include "display/lcd_display.h"
@@ -19,7 +18,6 @@
 // #include "esp32_camera.h"
 #include "stackchan_camera.h"
 #include "hal_bridge.h"
-#include "esp_video_init.h"
 
 #define TAG "M5Stack-StackChan-Board"
 
@@ -189,7 +187,7 @@ private:
     Aw9523* aw9523_;
     Ft6336* ft6336_;
     LvglDisplay* display_;
-    Camera* camera_ = nullptr;
+    StackChanCamera* camera_;
     esp_timer_handle_t touchpad_timer_;
     PowerSaveTimer* power_save_timer_;
 
@@ -370,7 +368,6 @@ private:
                                               DISPLAY_OFFSET_Y, DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y, DISPLAY_SWAP_XY);
     }
 
-#if !defined(CONFIG_IDF_TARGET_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32S3)
     void InitializeCamera()
     {
         ESP_LOGI(TAG, "Init Camera");
@@ -412,11 +409,9 @@ private:
             .dvp = &dvp_config,
         };
 
-        auto* cam = new StackChanCamera(video_config);
-        cam->SetHMirror(false);
-        camera_ = cam;
+        camera_ = new StackChanCamera(video_config);
+        camera_->SetHMirror(false);
     }
-#endif  // ndef CONFIG_IDF_TARGET_ESP32
 
 public:
     M5StackCoreS3Board()
@@ -428,9 +423,7 @@ public:
         I2cDetect();
         InitializeSpi();
         InitializeIli9342Display();
-#if !defined(CONFIG_IDF_TARGET_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32S3)
         InitializeCamera();
-#endif  // ndef CONFIG_IDF_TARGET_ESP32
         InitializeFt6336TouchPad();
         GetBacklight()->RestoreBrightness();
     }
@@ -496,10 +489,9 @@ i2c_master_bus_handle_t hal_bridge::board_get_i2c_bus()
     return board.GetI2cBus();
 }
 
-#if !defined(CONFIG_IDF_TARGET_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32S3)
 StackChanCamera* hal_bridge::board_get_camera()
 {
     auto& board = Board::GetInstance();
-    return (StackChanCamera*)board.GetCamera();
+    auto camera = (StackChanCamera*)board.GetCamera();
+    return camera;
 }
-#endif  // !defined(CONFIG_IDF_TARGET_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32S3)

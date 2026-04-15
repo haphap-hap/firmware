@@ -241,7 +241,7 @@ void StackChanAvatarDisplay::SetupXiaoZhiUI()
     lv_obj_align(preview_image_, LV_ALIGN_CENTER, 0, -25);
     lv_obj_add_flag(preview_image_, LV_OBJ_FLAG_HIDDEN);
 
-    GetHAL().startStackChanAutoUpdate(20);
+    GetHAL().startStackChanAutoUpdate(24);
 
     ESP_LOGI(TAG, "Avatar created and started");
 }
@@ -268,7 +268,7 @@ void StackChanAvatarDisplay::SetEmotion(const char* emotion)
 
     DisplayLockGuard lock(this);
 
-    ESP_LOGD(TAG, "SetEmotion: %s", emotion);
+    ESP_LOGE(TAG, "SetEmotion: %s", emotion);
 
     auto& avatar = stackchan.avatar();
 
@@ -316,39 +316,14 @@ void StackChanAvatarDisplay::SetEmotion(const char* emotion)
     }
 }
 
-    void StackChanAvatarDisplay::SetChatMessage(const char* role, const char* content)
+void StackChanAvatarDisplay::SetChatMessage(const char* role, const char* content)
 {
     auto& stackchan = GetStackChan();
-    if (!stackchan.hasAvatar() || role == nullptr || content == nullptr) {
+    if (!stackchan.hasAvatar()) {
         return;
     }
 
-    // Suppress exact duplicate updates to avoid redundant rendering.
-    int64_t now_us = esp_timer_get_time();
-    bool same_role = (last_chat_role_ == role);
-    bool same_text = (last_chat_content_ == content);
-    if (same_role && same_text) {
-        return;
-    }
-
-    // Lightweight throttling: keep updates smooth while avoiding excessive LVGL redraw pressure.
-    constexpr int64_t kAssistantMinUpdateIntervalUs = 50 * 1000;
-    constexpr int64_t kUserMinUpdateIntervalUs      = 140 * 1000;
-    int64_t min_interval_us = 0;
-    if (strcmp(role, "assistant") == 0) {
-        min_interval_us = kAssistantMinUpdateIntervalUs;
-    } else if (strcmp(role, "user") == 0) {
-        min_interval_us = kUserMinUpdateIntervalUs;
-    }
-    if (min_interval_us > 0 && (now_us - last_chat_update_us_) < min_interval_us) {
-        return;
-    }
-
-    last_chat_role_ = role;
-    last_chat_content_ = content;
-    last_chat_update_us_ = now_us;
-
-    ESP_LOGD(TAG, "SetChatMessage: role=%s, content=%s", role, content);
+    ESP_LOGE(TAG, "SetChatMessage: role=%s, content=%s", role ? role : "null", content ? content : "null");
 
     DisplayLockGuard lock(this);
 
@@ -408,7 +383,7 @@ void StackChanAvatarDisplay::SetTheme(Theme* theme)
 
 void StackChanAvatarDisplay::SetStatus(const char* status)
 {
-    ESP_LOGD(TAG, "SetStatus: %s", status);
+    ESP_LOGE(TAG, "SetStatus: %s", status);
 
     LvglDisplay::SetStatus(status);
 
@@ -419,10 +394,12 @@ void StackChanAvatarDisplay::SetStatus(const char* status)
     }
 
     auto& avatar = stackchan.avatar();
+    auto& motion = stackchan.motion();
 
     DisplayLockGuard lock(this);
 
-    bool is_idle = false;
+    bool is_idle      = false;
+    bool is_listening = false;
 
     if (strcmp(status, Lang::Strings::LISTENING) == 0) {
         if (speaking_modifier_id_ >= 0) {
@@ -450,7 +427,7 @@ void StackChanAvatarDisplay::SetStatus(const char* status)
 
     } else if (strcmp(status, Lang::Strings::SPEAKING) == 0) {
         if (speaking_modifier_id_ < 0) {
-            speaking_modifier_id_ = stackchan.addModifier(std::make_unique<SpeakingModifier>(0, 220, false));
+            speaking_modifier_id_ = stackchan.addModifier(std::make_unique<SpeakingModifier>());
         }
 
         GetHAL().setRgbColor(0, 0, 0, 50);
@@ -459,13 +436,13 @@ void StackChanAvatarDisplay::SetStatus(const char* status)
 
     if (is_idle) {
         // Start idle motion
-        ESP_LOGD(TAG, "Start idle motion");
+        ESP_LOGW(TAG, "Start idle motion");
         if (idle_motion_modifier_id_ < 0) {
             idle_motion_modifier_id_ = stackchan.addModifier(std::make_unique<IdleMotionModifier>());
         }
     } else {
         // Stop idle motion
-        ESP_LOGD(TAG, "Stop idle motion");
+        ESP_LOGW(TAG, "Stop idle motion");
         if (idle_motion_modifier_id_ >= 0) {
             stackchan.removeModifier(idle_motion_modifier_id_);
             idle_motion_modifier_id_ = -1;

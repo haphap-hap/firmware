@@ -110,6 +110,7 @@ void CoreS3AudioCodec::CreateDuplexChannels(gpio_num_t mclk, gpio_num_t bclk, gp
         .clk_cfg = {
             .sample_rate_hz = (uint32_t)output_sample_rate_,
             .clk_src = I2S_CLK_SRC_DEFAULT,
+            .ext_clk_freq_hz = 0,
             .mclk_multiple = I2S_MCLK_MULTIPLE_256
         },
         .slot_cfg = {
@@ -119,7 +120,10 @@ void CoreS3AudioCodec::CreateDuplexChannels(gpio_num_t mclk, gpio_num_t bclk, gp
             .slot_mask = I2S_STD_SLOT_BOTH,
             .ws_width = I2S_DATA_BIT_WIDTH_16BIT,
             .ws_pol = false,
-            .bit_shift = true
+            .bit_shift = true,
+            .left_align = true,
+            .big_endian = false,
+            .bit_order_lsb = false
         },
         .gpio_cfg = {
             .mclk = mclk,
@@ -135,20 +139,27 @@ void CoreS3AudioCodec::CreateDuplexChannels(gpio_num_t mclk, gpio_num_t bclk, gp
         }
     };
 
-    i2s_std_config_t input_cfg = {
+    i2s_tdm_config_t tdm_cfg = {
         .clk_cfg = {
             .sample_rate_hz = (uint32_t)input_sample_rate_,
             .clk_src = I2S_CLK_SRC_DEFAULT,
+            .ext_clk_freq_hz = 0,
             .mclk_multiple = I2S_MCLK_MULTIPLE_256,
+            .bclk_div = 8,
         },
         .slot_cfg = {
             .data_bit_width = I2S_DATA_BIT_WIDTH_16BIT,
             .slot_bit_width = I2S_SLOT_BIT_WIDTH_AUTO,
             .slot_mode = I2S_SLOT_MODE_STEREO,
-            .slot_mask = I2S_STD_SLOT_BOTH,
-            .ws_width = I2S_DATA_BIT_WIDTH_16BIT,
+            .slot_mask = i2s_tdm_slot_mask_t(I2S_TDM_SLOT0 | I2S_TDM_SLOT1 | I2S_TDM_SLOT2 | I2S_TDM_SLOT3),
+            .ws_width = I2S_TDM_AUTO_WS_WIDTH,
             .ws_pol = false,
-            .bit_shift = true
+            .bit_shift = true,
+            .left_align = false,
+            .big_endian = false,
+            .bit_order_lsb = false,
+            .skip_mask = false,
+            .total_slot = I2S_TDM_AUTO_SLOT_NUM
         },
         .gpio_cfg = {
             .mclk = mclk,
@@ -165,7 +176,7 @@ void CoreS3AudioCodec::CreateDuplexChannels(gpio_num_t mclk, gpio_num_t bclk, gp
     };
 
     ESP_ERROR_CHECK(i2s_channel_init_std_mode(tx_handle_, &std_cfg));
-    ESP_ERROR_CHECK(i2s_channel_init_std_mode(rx_handle_, &input_cfg));
+    ESP_ERROR_CHECK(i2s_channel_init_tdm_mode(rx_handle_, &tdm_cfg));
     ESP_LOGI(TAG, "Duplex channels created");
 }
 

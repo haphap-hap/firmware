@@ -9,8 +9,6 @@
 #include <chrono>
 #include <vector>
 #include <memory>
-#include <optional>
-#include <ctime>
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -22,7 +20,6 @@
 class ReminderItem : public stackchan::Poolable {
 public:
     ReminderItem(int duration_s, const std::string& msg);
-    ReminderItem(std::time_t epoch_seconds, const std::string& msg);
 
     bool IsDue() const;
     bool IsTriggered() const
@@ -40,8 +37,7 @@ public:
 
 private:
     std::string message_;
-    std::optional<std::chrono::steady_clock::time_point> target_steady_time_;
-    std::optional<std::chrono::system_clock::time_point> target_system_time_;
+    std::chrono::steady_clock::time_point target_time_;
     bool triggered_ = false;
 };
 
@@ -57,7 +53,6 @@ public:
     // message: 提醒内容
     // 返回: 提醒 ID
     int CreateReminder(int duration_s, const std::string& message);
-    int CreateReminderAtEpochSeconds(int epoch_seconds, const std::string& message);
 
     // 停止/关闭提醒
     // id: 提醒 ID

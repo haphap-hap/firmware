@@ -7,52 +7,18 @@
 #include <esp_log.h>
 #include <assets/assets.h>
 #include <hal/hal.h>
-#include <application.h>
-#include <board.h>
-#include <display.h>
-#include <ctime>
-#include <stackchan/stackchan.h>
-#include <stackchan/modifiers/speaking.h>
-#include <assets/lang_config.h>
+#include <hal/board/hal_bridge.h>
 
 static const char* TAG = "ReminderManager";
 
-static void PlayDigitSound(Application& app, char digit)
-{
-    switch (digit) {
-        case '0': app.PlaySound(Lang::Sounds::OGG_0); break;
-        case '1': app.PlaySound(Lang::Sounds::OGG_1); break;
-        case '2': app.PlaySound(Lang::Sounds::OGG_2); break;
-        case '3': app.PlaySound(Lang::Sounds::OGG_3); break;
-        case '4': app.PlaySound(Lang::Sounds::OGG_4); break;
-        case '5': app.PlaySound(Lang::Sounds::OGG_5); break;
-        case '6': app.PlaySound(Lang::Sounds::OGG_6); break;
-        case '7': app.PlaySound(Lang::Sounds::OGG_7); break;
-        case '8': app.PlaySound(Lang::Sounds::OGG_8); break;
-        case '9': app.PlaySound(Lang::Sounds::OGG_9); break;
-        default: break;
-    }
-}
-
 ReminderItem::ReminderItem(int duration_s, const std::string& msg) : message_(msg)
 {
-    target_steady_time_ = std::chrono::steady_clock::now() + std::chrono::seconds(duration_s);
-}
-
-ReminderItem::ReminderItem(std::time_t epoch_seconds, const std::string& msg) : message_(msg)
-{
-    target_system_time_ = std::chrono::system_clock::from_time_t(epoch_seconds);
+    target_time_ = std::chrono::steady_clock::now() + std::chrono::seconds(duration_s);
 }
 
 bool ReminderItem::IsDue() const
 {
-    if (target_steady_time_.has_value()) {
-        return std::chrono::steady_clock::now() >= target_steady_time_.value();
-    }
-    if (target_system_time_.has_value()) {
-        return std::chrono::system_clock::now() >= target_system_time_.value();
-    }
-    return false;
+    return std::chrono::steady_clock::now() >= target_time_;
 }
 
 ReminderManager& ReminderManager::GetInstance()
@@ -99,32 +65,11 @@ void ReminderManager::Start()
 
 int ReminderManager::CreateReminder(int duration_s, const std::string& message)
 {
-    if (duration_s <= 0) {
-        ESP_LOGE(TAG, "CreateReminder failed: duration_s must be > 0");
-        return -1;
-    }
-
     xSemaphoreTake(mutex_, portMAX_DELAY);
     auto item = std::make_unique<ReminderItem>(duration_s, message);
     int id    = pool_.create(std::move(item));
     xSemaphoreGive(mutex_);
     ESP_LOGI(TAG, "Created reminder ID: %d, Duration: %ds, Msg: %s", id, duration_s, message.c_str());
-    return id;
-}
-
-int ReminderManager::CreateReminderAtEpochSeconds(int epoch_seconds, const std::string& message)
-{
-    std::time_t now = std::time(nullptr);
-    if (epoch_seconds <= now) {
-        ESP_LOGE(TAG, "CreateReminderAtEpochSeconds failed: time must be in the future");
-        return -1;
-    }
-
-    xSemaphoreTake(mutex_, portMAX_DELAY);
-    auto item = std::make_unique<ReminderItem>(static_cast<std::time_t>(epoch_seconds), message);
-    int id    = pool_.create(std::move(item));
-    xSemaphoreGive(mutex_);
-    ESP_LOGI(TAG, "Created reminder ID: %d, At: %d, Msg: %s", id, epoch_seconds, message.c_str());
     return id;
 }
 
@@ -134,6 +79,10 @@ void ReminderManager::StopReminder(int id)
 
     // 如果正在响铃的是这个提醒，停止播放
     if (id == ringing_id_) {
+        if (hal_bridge::is_xiaozhi_mode()) {
+        } else {
+            // audio_player_.Stop();
+        }
         ringing_id_ = -1;
     }
 
@@ -190,37 +139,17 @@ void ReminderManager::WorkerThread()
                 xSemaphoreGive(mutex_);
             }
 
-            auto& app = Application::GetInstance();
-            app.Schedule([msg]() {
-                auto display = Board::GetInstance().GetDisplay();
-                std::string reminder_text = std::string("提醒: ") + msg;
-                display->ShowNotification(reminder_text.c_str(), 10000);
-                display->SetChatMessage("system", reminder_text.c_str());
-
-                // Add speaking animation so reminder feels like voice notification.
-                auto& stackchan = GetStackChan();
-                if (stackchan.hasAvatar()) {
-                    stackchan.addModifier(std::make_unique<stackchan::SpeakingModifier>(3000, 150, false));
+            // 播放铃声 (循环)
+            if (!OGG_CAMERA_SHUTTER.empty()) {
+                if (hal_bridge::is_xiaozhi_mode()) {
+                    hal_bridge::app_play_sound(OGG_CAMERA_SHUTTER);
+                } else {
+                    // audio_player_.Play(reinterpret_cast<const uint8_t*>(OGG_CAMERA_SHUTTER.data()),
+                    //                    OGG_CAMERA_SHUTTER.size(), true);
                 }
-
-                // Voice-style reminder: play time digits (HHMM) using existing number OGG assets.
-                auto& app = Application::GetInstance();
-                std::time_t now = std::time(nullptr);
-                std::tm local_tm{};
-                localtime_r(&now, &local_tm);
-                char hhmm[5] = {0};
-                std::strftime(hhmm, sizeof(hhmm), "%H%M", &local_tm);
-
-                app.PlaySound(Lang::Sounds::OGG_POPUP);
-                for (char c : hhmm) {
-                    PlayDigitSound(app, c);
-                }
-                app.PlaySound(Lang::Sounds::OGG_EXCLAMATION);
-
-                if (!OGG_CAMERA_SHUTTER.empty()) {
-                    Application::GetInstance().PlaySound(OGG_CAMERA_SHUTTER);
-                }
-            });
+            } else {
+                ESP_LOGW(TAG, "No ringtone data available");
+            }
 
             // 发出信号
             GetHAL().onReminderTriggered.emit(id, msg);

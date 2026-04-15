@@ -18,8 +18,6 @@ file(GLOB_RECURSE STACK_CHAN_SOURCES
 )
 set(STACK_CHAN_INCLUDE_DIRS 
     "."
-    "hal"
-    "hal/drivers"
 )
 list(APPEND STACK_CHAN_SOURCES main.cpp)
 

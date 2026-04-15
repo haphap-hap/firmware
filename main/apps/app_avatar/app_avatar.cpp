@@ -172,6 +172,7 @@ void AppAvatar::onOpen()
         LvglLockGuard lvgl_lock;
 
         auto& stackchan = GetStackChan();
+        auto& avatar    = stackchan.avatar();
 
         stackchan.addModifier(
             std::make_unique<TimedSpeechModifier>(fmt::format("{} says: {}", message.name, message.content), 6000));

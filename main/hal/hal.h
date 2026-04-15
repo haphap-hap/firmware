@@ -128,9 +128,7 @@ public:
     /* -------------------------------- Reminder -------------------------------- */
     uitk::Signal<int, std::string> onReminderTriggered;
     int createReminder(int duration_s, const std::string& message);
-    int createReminderAtEpochSeconds(int epoch_seconds, const std::string& message);
     void stopReminder(int id);
-    bool isSystemTimeValid();
 
     /* ----------------------------------- IMU ---------------------------------- */
     uitk::Signal<ImuMotionEvent> onImuMotionEvent;

@@ -42,14 +42,7 @@ void start_xiaozhi_app();
 
 i2c_master_bus_handle_t board_get_i2c_bus();
 
-#if !defined(CONFIG_IDF_TARGET_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32S3)
-// StackChanCamera is a global class defined in stackchan_camera.h.
-class ::StackChanCamera;
-::StackChanCamera* board_get_camera();
-#endif
-
-// For ESP32 and ESP32S3, provide a null implementation
-inline auto board_get_camera() { return nullptr; }
+StackChanCamera* board_get_camera();
 
 void app_play_sound(const std::string_view& sound);
 
